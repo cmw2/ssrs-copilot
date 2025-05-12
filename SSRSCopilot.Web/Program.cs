@@ -19,6 +19,12 @@ builder.Services.AddHttpClient<WeatherApiClient>(client =>
         client.BaseAddress = new("https+http://apiservice");
     });
 
+builder.Services.AddHttpClient<ChatApiClient>(client =>
+    {
+        // This URL uses "https+http://" to indicate HTTPS is preferred over HTTP.
+        client.BaseAddress = new("https+http://apiservice");
+    });
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
