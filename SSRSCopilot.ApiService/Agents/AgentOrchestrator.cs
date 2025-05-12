@@ -1,4 +1,5 @@
 using SSRSCopilot.ApiService.Models;
+using System.Text.RegularExpressions;
 
 namespace SSRSCopilot.ApiService.Agents;
 
@@ -10,17 +11,20 @@ public class AgentOrchestrator
     private readonly ReportSelectorAgent _reportSelectorAgent;
     private readonly ParameterFillerAgent _parameterFillerAgent;
     private readonly ReportUrlCreatorAgent _reportUrlCreatorAgent;
+    private readonly ChitchatAgent _chitchatAgent;
     private readonly ILogger<AgentOrchestrator> _logger;
     
     public AgentOrchestrator(
         ReportSelectorAgent reportSelectorAgent,
         ParameterFillerAgent parameterFillerAgent,
         ReportUrlCreatorAgent reportUrlCreatorAgent,
+        ChitchatAgent chitchatAgent,
         ILogger<AgentOrchestrator> logger)
     {
         _reportSelectorAgent = reportSelectorAgent;
         _parameterFillerAgent = parameterFillerAgent;
         _reportUrlCreatorAgent = reportUrlCreatorAgent;
+        _chitchatAgent = chitchatAgent;
         _logger = logger;
     }
     
@@ -37,6 +41,13 @@ public class AgentOrchestrator
         
         try
         {
+            // Check if this is a chitchat message
+            if (IsChitchatMessage(userMessage))
+            {
+                // Process through the chitchat agent but don't change state
+                return await _chitchatAgent.ProcessMessageAsync(userMessage, context);
+            }
+            
             // Route the message to the appropriate agent based on the current state
             ChatResponse response = context.State switch
             {
@@ -62,6 +73,28 @@ public class AgentOrchestrator
                 State = AgentState.ReportSelection
             };
         }
+    }
+    
+    /// <summary>
+    /// Determines if a message is likely to be chitchat (greeting, etc.)
+    /// </summary>
+    private bool IsChitchatMessage(string message)
+    {
+        // Normalize the message for case-insensitive comparison
+        string normalizedMessage = message.ToLowerInvariant().Trim();
+        
+        // Check for common greetings and chitchat patterns
+        string[] chitchatPatterns = 
+        {
+            "^hi$", "^hello$", "^hey$", "^hi there$", "^hello there$", "^hey there$",
+            "^good morning$", "^good afternoon$", "^good evening$", "^howdy$",
+            "^how are you$", "^how are you doing$", "^how's it going$", "^what's up$",
+            "^greetings$", "^yo$", "^hiya$", "^sup$", "^test$", "^testing$",
+            "^are you there$", "^you there$", "^anybody home$", "^anyone there$"
+        };
+        
+        // Check if the message matches any of the chitchat patterns
+        return chitchatPatterns.Any(pattern => Regex.IsMatch(normalizedMessage, pattern));
     }
     
     /// <summary>

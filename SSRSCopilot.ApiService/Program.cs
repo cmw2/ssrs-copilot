@@ -46,23 +46,31 @@ builder.Services.AddSingleton<Kernel>(sp =>
     var config = sp.GetRequiredService<IConfiguration>();
     string endpoint = config["AzureOpenAI:Endpoint"] ?? "https://example.openai.azure.com";
     string apiKey = config["AzureOpenAI:ApiKey"] ?? "demo-key";
-    string deploymentName = config["AzureOpenAI:DeploymentName"] ?? "gpt-4";    // For development/testing without Azure OpenAI, we can use OpenAI directly
-    // Remove this in production and use Azure OpenAI with proper authentication
-    var kernel = Kernel.CreateBuilder()
-        .AddOpenAIChatCompletion(
-            modelId: "gpt-4-turbo", 
-            apiKey: config["OpenAI:ApiKey"] ?? "sk-dummy-key")
-        .Build();
+    string deploymentName = config["AzureOpenAI:DeploymentName"] ?? "gpt-4";
     
-    return kernel;
-
-    // Azure OpenAI configuration for production
-    // return new KernelBuilder()
-    //     .AddAzureOpenAIChatCompletion(
-    //         deploymentName: deploymentName,
-    //         endpoint: endpoint,
-    //         apiKey: apiKey)
-    //     .Build();
+    // Check if we should use Azure OpenAI or direct OpenAI
+    bool useAzureOpenAI = !string.IsNullOrEmpty(endpoint) && endpoint != "https://example.openai.azure.com" && 
+                          !string.IsNullOrEmpty(apiKey) && apiKey != "demo-key";
+    
+    if (useAzureOpenAI)
+    {
+        // Azure OpenAI configuration for production
+        return Kernel.CreateBuilder()
+            .AddAzureOpenAIChatCompletion(
+                deploymentName: deploymentName,
+                endpoint: endpoint,
+                apiKey: apiKey)
+            .Build();
+    }
+    else
+    {
+        // Fallback to direct OpenAI for development/testing
+        return Kernel.CreateBuilder()
+            .AddOpenAIChatCompletion(
+                modelId: config["OpenAI:ModelId"] ?? "gpt-4-turbo", 
+                apiKey: config["OpenAI:ApiKey"] ?? "sk-dummy-key")
+            .Build();
+    }
 });
 
 // Register services
@@ -73,6 +81,7 @@ builder.Services.AddSingleton<IReportUrlService, SsrsReportUrlService>();
 builder.Services.AddSingleton<ReportSelectorAgent>();
 builder.Services.AddSingleton<ParameterFillerAgent>();
 builder.Services.AddSingleton<ReportUrlCreatorAgent>();
+builder.Services.AddSingleton<ChitchatAgent>();
 builder.Services.AddSingleton<AgentOrchestrator>();
 
 var app = builder.Build();
