@@ -1,14 +1,14 @@
+@page "/"
 @page "/chat"
 @using SSRSCopilot.Web.Models
 @inject ChatApiClient ChatClient
 @rendermode InteractiveServer
 
-<PageTitle>Report Chat</PageTitle>
+<PageTitle>SSRS Copilot</PageTitle>
 
 <div class="container">
     <div class="row">
         <div class="col-md-6 chat-panel">
-            <h1>Report Chat</h1>
             <div class="chat-messages" id="chat-messages">
                 @foreach (var message in messages)
                 {
