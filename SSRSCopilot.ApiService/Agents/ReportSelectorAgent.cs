@@ -56,14 +56,14 @@ public class ReportSelectorAgent : IAgent
             // Add the user message to the history
             context.History.Add(new ChatMessage { Role = "user", Content = userMessage });
 
-            // If we already have a selected report, move to the next agent
+            // If we already have a selected report, move to the SSRS API agent
             if (context.SelectedReport != null)
             {
-                context.State = AgentState.ParameterFilling;
+                context.State = AgentState.SsrsApiRetrieval;
                 return new ChatResponse
                 {
-                    Message = $"I see you've already selected the '{context.SelectedReport.Name}' report. Let's fill in the required parameters.",
-                    State = AgentState.ParameterFilling
+                    Message = $"I see you've already selected the '{context.SelectedReport.Name}' report. Let me retrieve the details and parameters for this report.",
+                    State = AgentState.SsrsApiRetrieval
                 };
             }
 
@@ -158,15 +158,15 @@ When you find reports, return them in a structured JSON format with these fields
             {
                 // Only one report found, select it automatically
                 context.SelectedReport = reports[0];
-                context.State = AgentState.ParameterFilling;
+                context.State = AgentState.SsrsApiRetrieval;
 
-                var singleReportMessage = $"I found the '{reports[0].Name}' report which matches your request. This report {reports[0].Description}. Shall we use this report?";
+                var singleReportMessage = $"I found the '{reports[0].Name}' report which matches your request. This report {reports[0].Description}. Let me retrieve the full details and parameters for this report.";
                 context.History.Add(new ChatMessage { Role = "assistant", Content = singleReportMessage });
 
                 return new ChatResponse
                 {
                     Message = singleReportMessage,
-                    State = AgentState.ParameterFilling
+                    State = AgentState.SsrsApiRetrieval
                 };
             }
 
@@ -249,7 +249,7 @@ When you find reports, return them in a structured JSON format with these fields
             _logger.LogDebug("Received JSON response: {JsonContent}", jsonContent);
 
             // Try parsing the JSON - using multiple strategies
-            List<Report> reports = null;
+            List<Report> reports = new List<Report>();
 
             try
             {
@@ -321,7 +321,7 @@ When you find reports, return them in a structured JSON format with these fields
                 }
             }
 
-            return reports ?? new List<Report>();
+            return reports;
         }
         catch (Exception ex)
         {

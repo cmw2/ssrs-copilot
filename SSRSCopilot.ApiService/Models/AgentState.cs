@@ -11,6 +11,11 @@ public enum AgentState
     ReportSelection,
     
     /// <summary>
+    /// The SSRS API agent is active
+    /// </summary>
+    SsrsApiRetrieval,
+    
+    /// <summary>
     /// The parameter filling agent is active
     /// </summary>
     ParameterFilling,

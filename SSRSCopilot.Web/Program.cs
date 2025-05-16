@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using SSRSCopilot.Web;
 using SSRSCopilot.Web.Components;
 
@@ -11,6 +12,13 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddOutputCache();
+
+// Configure Kestrel server options for increased timeout
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
+});
 
 builder.Services.AddHttpClient<ChatApiClient>(client =>
     {

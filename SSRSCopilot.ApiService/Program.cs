@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Search.Documents;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.SemanticKernel;
 using SSRSCopilot.ApiService.Agents;
 using SSRSCopilot.ApiService.Services;
@@ -14,6 +15,13 @@ builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure request timeout to 2 minutes (120 seconds)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
+});
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -77,8 +85,13 @@ builder.Services.AddSingleton<Kernel>(sp =>
 builder.Services.AddSingleton<IReportService, AzureSearchReportService>();
 builder.Services.AddSingleton<IReportUrlService, SsrsReportUrlService>();
 
+// Register HTTP client for SSRS REST API and properly inject it to the service
+builder.Services.AddHttpClient<SsrsRestApiService>();
+builder.Services.AddSingleton<ISsrsRestApiService, SsrsRestApiService>();
+
 // Register agents
 builder.Services.AddSingleton<ReportSelectorAgent>();
+builder.Services.AddSingleton<SsrsApiAgent>();
 builder.Services.AddSingleton<ParameterFillerAgent>();
 builder.Services.AddSingleton<ReportUrlCreatorAgent>();
 builder.Services.AddSingleton<ChitchatAgent>();

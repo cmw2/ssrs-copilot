@@ -9,6 +9,7 @@ namespace SSRSCopilot.ApiService.Agents;
 public class AgentOrchestrator
 {
     private readonly ReportSelectorAgent _reportSelectorAgent;
+    private readonly SsrsApiAgent _ssrsApiAgent;
     private readonly ParameterFillerAgent _parameterFillerAgent;
     private readonly ReportUrlCreatorAgent _reportUrlCreatorAgent;
     private readonly ChitchatAgent _chitchatAgent;
@@ -16,12 +17,14 @@ public class AgentOrchestrator
     
     public AgentOrchestrator(
         ReportSelectorAgent reportSelectorAgent,
+        SsrsApiAgent ssrsApiAgent,
         ParameterFillerAgent parameterFillerAgent,
         ReportUrlCreatorAgent reportUrlCreatorAgent,
         ChitchatAgent chitchatAgent,
         ILogger<AgentOrchestrator> logger)
     {
         _reportSelectorAgent = reportSelectorAgent;
+        _ssrsApiAgent = ssrsApiAgent;
         _parameterFillerAgent = parameterFillerAgent;
         _reportUrlCreatorAgent = reportUrlCreatorAgent;
         _chitchatAgent = chitchatAgent;
@@ -52,6 +55,7 @@ public class AgentOrchestrator
             ChatResponse response = context.State switch
             {
                 AgentState.ReportSelection => await _reportSelectorAgent.ProcessMessageAsync(userMessage, context),
+                AgentState.SsrsApiRetrieval => await _ssrsApiAgent.ProcessMessageAsync(userMessage, context),
                 AgentState.ParameterFilling => await _parameterFillerAgent.ProcessMessageAsync(userMessage, context),
                 AgentState.ReportUrlCreation => await _reportUrlCreatorAgent.ProcessMessageAsync(userMessage, context),
                 AgentState.Completed => await HandleCompletedStateAsync(userMessage, context),
