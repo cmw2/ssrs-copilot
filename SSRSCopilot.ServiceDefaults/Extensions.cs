@@ -2,11 +2,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Polly;
+using Polly.Timeout;
+using System;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -24,12 +28,22 @@ public static class Extensions
 
         builder.AddDefaultHealthChecks();
 
-        builder.Services.AddServiceDiscovery();
-
-        builder.Services.ConfigureHttpClientDefaults(http =>
+        builder.Services.AddServiceDiscovery();        builder.Services.ConfigureHttpClientDefaults(http =>
         {
             // Turn on resilience by default
-            http.AddStandardResilienceHandler();
+            // First remove the default handler and then add a custom one with longer timeout
+            http.AddResilienceHandler("LongTimeoutResilienceHandler", builder =>
+            {
+                // Add a timeout strategy that's longer than the default
+                builder.AddTimeout(TimeSpan.FromMinutes(2));
+
+                // Add other standard resilience strategies
+                builder.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    BackoffType = DelayBackoffType.Exponential
+                });
+            });
 
             // Turn on service discovery by default
             http.AddServiceDiscovery();

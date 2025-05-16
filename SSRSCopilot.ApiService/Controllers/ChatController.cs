@@ -8,11 +8,11 @@ namespace SSRSCopilot.ApiService.Controllers;
 [Route("api/[controller]")]
 public class ChatController : ControllerBase
 {
-    private readonly AgentOrchestrator _orchestrator;
+    private readonly FunctionCallingAgentOrchestrator _orchestrator;
     private readonly ILogger<ChatController> _logger;
 
     public ChatController(
-        AgentOrchestrator orchestrator,
+        FunctionCallingAgentOrchestrator orchestrator,
         ILogger<ChatController> logger)
     {
         _orchestrator = orchestrator;

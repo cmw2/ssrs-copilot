@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using SSRSCopilot.Web;
 using SSRSCopilot.Web.Components;
 
@@ -24,6 +26,9 @@ builder.Services.AddHttpClient<ChatApiClient>(client =>
     {
         // This URL uses "https+http://" to indicate HTTPS is preferred over HTTP.
         client.BaseAddress = new("https+http://apiservice");
+
+        // Set a longer timeout directly on the client
+        client.Timeout = TimeSpan.FromMinutes(2);
     });
 
 var app = builder.Build();

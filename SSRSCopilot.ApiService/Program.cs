@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
 });
 
 // Configure Azure Search
-builder.Services.AddSingleton<SearchClient>(sp =>
+builder.Services.AddScoped<SearchClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     string searchServiceEndpoint = config["AzureSearch:Endpoint"] ?? "https://example.search.windows.net";
@@ -49,7 +49,7 @@ builder.Services.AddSingleton<SearchClient>(sp =>
 });
 
 // Configure Azure OpenAI services
-builder.Services.AddSingleton<Kernel>(sp =>
+builder.Services.AddScoped<Kernel>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     string endpoint = config["AzureOpenAI:Endpoint"] ?? "https://example.openai.azure.com";
@@ -82,20 +82,27 @@ builder.Services.AddSingleton<Kernel>(sp =>
 });
 
 // Register services
-builder.Services.AddSingleton<IReportService, AzureSearchReportService>();
-builder.Services.AddSingleton<IReportUrlService, SsrsReportUrlService>();
+builder.Services.AddScoped<IReportService, AzureSearchReportService>();
+builder.Services.AddScoped<IReportUrlService, SsrsReportUrlService>();
 
 // Register HTTP client for SSRS REST API and properly inject it to the service
 builder.Services.AddHttpClient<SsrsRestApiService>();
-builder.Services.AddSingleton<ISsrsRestApiService, SsrsRestApiService>();
+builder.Services.AddScoped<ISsrsRestApiService, SsrsRestApiService>();
 
 // Register agents
-builder.Services.AddSingleton<ReportSelectorAgent>();
-builder.Services.AddSingleton<SsrsApiAgent>();
-builder.Services.AddSingleton<ParameterFillerAgent>();
-builder.Services.AddSingleton<ReportUrlCreatorAgent>();
-builder.Services.AddSingleton<ChitchatAgent>();
-builder.Services.AddSingleton<AgentOrchestrator>();
+builder.Services.AddScoped<ReportSelectorAgent>();
+builder.Services.AddScoped<SsrsApiAgent>();
+builder.Services.AddScoped<ParameterFillerAgent>();
+builder.Services.AddScoped<ReportUrlCreatorAgent>();
+builder.Services.AddScoped<ChitchatAgent>();
+builder.Services.AddScoped<AgentOrchestrator>();
+
+// Register new function calling agents
+builder.Services.AddScoped<FunctionCallingAgent>();
+builder.Services.AddScoped<FunctionCallingAgentOrchestrator>();
+
+// ChatContext is created per request in the controller
+// We shouldn't register it in the DI container as it needs to be passed around explicitly
 
 var app = builder.Build();
 
