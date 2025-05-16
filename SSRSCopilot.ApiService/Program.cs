@@ -97,8 +97,8 @@ builder.Services.AddScoped<ReportUrlCreatorAgent>();
 builder.Services.AddScoped<ChitchatAgent>();
 builder.Services.AddScoped<AgentOrchestrator>();
 
-// Register new function calling agents
-builder.Services.AddScoped<FunctionCallingAgent>();
+// Register the main function calling agent orchestrator
+// Note: We're no longer using the individual function calling agent since the orchestrator now directly handles everything
 builder.Services.AddScoped<FunctionCallingAgentOrchestrator>();
 
 // ChatContext is created per request in the controller

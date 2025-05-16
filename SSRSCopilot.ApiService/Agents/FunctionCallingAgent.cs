@@ -101,16 +101,32 @@ public class FunctionCallingAgent
     /// </summary>
     private void RegisterFunctions(ChatContext? context = null)
     {
-        // We need to directly create instances of these plugin classes
-        // using the context passed to ProcessMessageAsync
+        // We're going to use a try-catch approach to handle plugin registration
+        // This avoids the need to use API-specific methods for checking/removing plugins
         
-        // Create and register the SSRS service plugin
-        var ssrsServicePlugin = new SsrsServicePlugin(_ssrsRestApiService, context);
-        _kernel.Plugins.AddFromObject(ssrsServicePlugin, nameof(SsrsServicePlugin));
+        try
+        {
+            // Create and try to register the SSRS service plugin
+            var ssrsServicePlugin = new SsrsServicePlugin(_ssrsRestApiService, context);
+            _kernel.Plugins.AddFromObject(ssrsServicePlugin, nameof(SsrsServicePlugin));
+        }
+        catch (ArgumentException)
+        {
+            // Plugin already exists, we can ignore this error
+            _logger.LogDebug("SsrsServicePlugin already registered, skipping registration");
+        }
         
-        // Create and register the parameter validation plugin
-        var reportParamPlugin = new ReportParameterPlugin(_reportUrlService, context);
-        _kernel.Plugins.AddFromObject(reportParamPlugin, nameof(ReportParameterPlugin));
+        try
+        {
+            // Create and try to register the parameter validation plugin
+            var reportParamPlugin = new ReportParameterPlugin(_reportUrlService, context);
+            _kernel.Plugins.AddFromObject(reportParamPlugin, nameof(ReportParameterPlugin));
+        }
+        catch (ArgumentException)
+        {
+            // Plugin already exists, we can ignore this error
+            _logger.LogDebug("ReportParameterPlugin already registered, skipping registration");
+        }
     }
 
     /// <summary>
