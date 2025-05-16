@@ -9,10 +9,11 @@ namespace SSRSCopilot.Web;
 public class ChatApiClient
 {
     private readonly HttpClient _httpClient;
-    
+
     public ChatApiClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
+        _httpClient.Timeout = TimeSpan.FromMinutes(2);
     }
     
     /// <summary>
