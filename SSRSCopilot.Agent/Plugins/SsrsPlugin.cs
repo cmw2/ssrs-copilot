@@ -66,19 +66,21 @@ public class SsrsPlugin
     /// Generates a URL for running a report with the specified parameters
     /// </summary>
     /// <param name="reportId">The ID of the report to run</param>
-    /// <param name="parameterValues">JSON string containing parameter names and values</param>
+    /// <param name="parameterValues">Optional. Dictionary containing parameter names and values. If null, an empty dictionary will be used.</param>
     /// <returns>A URL that can be used to view the report</returns>
     [KernelFunction]
     [Description("Generate a URL for running a report with the specified parameters. Make sure you're using the exact SSRS report ID.")]
-    public async Task<string> GenerateReportUrlAsync(string reportId, Dictionary<string, string> parameterValues)
-    {
-        try 
+    public async Task<string> GenerateReportUrlAsync(string reportId, Dictionary<string, string>? parameterValues = null)
+    {        try 
         {
             var report = await _ssrsService.GetReportByIdAsync(reportId);
             if (report == null)
             {
                 throw new ArgumentException($"Report with ID '{reportId}' not found");
             }
+            
+            // Ensure parameterValues is not null
+            parameterValues ??= new Dictionary<string, string>();
             
             // Validate parameters before generating URL
             var validation = await ValidateParameterValuesAsync(reportId, parameterValues);
@@ -100,12 +102,11 @@ public class SsrsPlugin
     /// Validates if the parameter values provided are correct for the report
     /// </summary>
     /// <param name="reportId">The ID of the report</param>
-    /// <param name="parameterValues">The parameter values to validate</param>
+    /// <param name="parameterValues">Optional. Dictionary containing parameter names and values to validate. If null, an empty dictionary will be used.</param>
     /// <returns>Validation result with success flag and any error messages</returns>
     [KernelFunction]
     [Description("Validate if the parameter values provided are correct for the report. Make sure you're using the exact SSRS report ID.")]
-    public async Task<(bool IsValid, string[] ErrorMessages)> ValidateParameterValuesAsync(string reportId, Dictionary<string, string> parameterValues)
-    {
+    public async Task<(bool IsValid, string[] ErrorMessages)> ValidateParameterValuesAsync(string reportId, Dictionary<string, string>? parameterValues = null)    {
         var report = await _ssrsService.GetReportByIdAsync(reportId);
         if (report == null)
         {
@@ -114,6 +115,9 @@ public class SsrsPlugin
         
         var parameters = await _ssrsService.GetReportParametersAsync(reportId);
         var errorMessages = new List<string>();
+        
+        // Ensure parameterValues is not null
+        parameterValues ??= new Dictionary<string, string>();
         
         // Check if all required parameters are provided
         foreach (var parameter in parameters.Where(p => p.IsRequired))

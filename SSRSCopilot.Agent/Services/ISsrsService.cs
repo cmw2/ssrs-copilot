@@ -31,7 +31,7 @@ public interface ISsrsService
     /// Generates a URL for running a report with the specified parameters
     /// </summary>
     /// <param name="report">The report to run</param>
-    /// <param name="parameters">The parameter values to use</param>
+    /// <param name="parameters">The parameter values to use. If null, an empty dictionary will be used.</param>
     /// <returns>A URL that can be used to view the report</returns>
-    Task<string> GenerateReportUrlAsync(SsrsReportModel report, Dictionary<string, string> parameters);
+    Task<string> GenerateReportUrlAsync(SsrsReportModel report, Dictionary<string, string>? parameters = null);
 }
