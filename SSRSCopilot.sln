@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.0.0
 MinimumVisualStudioVersion = 17.8.0.0
@@ -6,9 +6,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSRSCopilot.AppHost", "SSRS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSRSCopilot.ServiceDefaults", "SSRSCopilot.ServiceDefaults\SSRSCopilot.ServiceDefaults.csproj", "{D701C79A-F485-4EFC-9FFB-8B2D173CB027}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSRSCopilot.ApiService", "SSRSCopilot.ApiService\SSRSCopilot.ApiService.csproj", "{E01599D1-C788-4320-B07F-BE8939E057DB}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSRSCopilot.Web", "SSRSCopilot.Web\SSRSCopilot.Web.csproj", "{E6182C75-DF35-4867-8FA8-FC6327AEE5AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSRSCopilot.Agent", "SSRSCopilot.Agent\SSRSCopilot.Agent.csproj", "{55CA8152-93BA-45DF-8EC8-582CEB3474ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +32,18 @@ Global
 		{E6182C75-DF35-4867-8FA8-FC6327AEE5AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6182C75-DF35-4867-8FA8-FC6327AEE5AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E6182C75-DF35-4867-8FA8-FC6327AEE5AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55CA8152-93BA-45DF-8EC8-582CEB3474ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55CA8152-93BA-45DF-8EC8-582CEB3474ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55CA8152-93BA-45DF-8EC8-582CEB3474ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55CA8152-93BA-45DF-8EC8-582CEB3474ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93105B21-AB39-4A91-B394-E1625A03BC3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93105B21-AB39-4A91-B394-E1625A03BC3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93105B21-AB39-4A91-B394-E1625A03BC3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93105B21-AB39-4A91-B394-E1625A03BC3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC0C29D7-A47C-4B77-A3A1-2699841964A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC0C29D7-A47C-4B77-A3A1-2699841964A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC0C29D7-A47C-4B77-A3A1-2699841964A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC0C29D7-A47C-4B77-A3A1-2699841964A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

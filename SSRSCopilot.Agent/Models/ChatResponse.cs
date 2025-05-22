@@ -1,7 +1,7 @@
-namespace SSRSCopilot.Web.Models;
+namespace SSRSCopilot.Agent.Models;
 
 /// <summary>
-/// Represents a response from the chat API
+/// Represents a response from the agent
 /// </summary>
 public class ChatResponse
 {
@@ -14,7 +14,6 @@ public class ChatResponse
     /// The URL to display in the iframe, if available
     /// </summary>
     public string? ReportUrl { get; set; }
-    
     
     /// <summary>
     /// The session ID for the conversation

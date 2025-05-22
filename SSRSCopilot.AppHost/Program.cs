@@ -1,12 +1,12 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var apiService = builder.AddProject<Projects.SSRSCopilot_ApiService>("apiservice")
+var agentService = builder.AddProject<Projects.SSRSCopilot_Agent>("agentservice")
     .WithHttpsHealthCheck("/health");
 
 builder.AddProject<Projects.SSRSCopilot_Web>("webfrontend")
     .WithExternalHttpEndpoints()
     .WithHttpsHealthCheck("/health")
-    .WithReference(apiService)
-    .WaitFor(apiService);
+    .WithReference(agentService)
+    .WaitFor(agentService);
 
 builder.Build().Run();

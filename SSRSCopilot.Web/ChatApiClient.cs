@@ -33,7 +33,10 @@ public class ChatApiClient
         var response = await _httpClient.PostAsJsonAsync("api/chat", request);
         response.EnsureSuccessStatusCode();
         
-        return await response.Content.ReadFromJsonAsync<ChatResponse>() 
+        // Deserialize the response into a ChatResponse
+        var responseData = await response.Content.ReadFromJsonAsync<ChatResponse>() 
             ?? throw new Exception("Failed to deserialize chat response");
+            
+        return responseData;
     }
 }
