@@ -79,17 +79,46 @@ namespace SSRSCopilot.Web.Components.Pages
                 {
                     sessionId = response.SessionId;
                 }
-                
-                // Add system response to the chat
+                  // Add system response to the chat
                 messages.Add(new ChatMessage { IsUser = false, Content = response.Message });
+                
+                // Log whether we have a report URL
+                if (string.IsNullOrEmpty(response.ReportUrl))
+                {
+                    await ErrorLogger.LogInfoToConsole("No report URL found in response");
+                }
+                else
+                {
+                    await ErrorLogger.LogInfoToConsole($"Report URL found: {response.ReportUrl}");
+                }
                 
                 // Update report URL if provided
                 if (!string.IsNullOrEmpty(response.ReportUrl))
                 {
+                    bool shouldUpdateUrl = response.ReportUrl != currentReportUrl;
+                    
+                    // Log whether the URL is different from the current one
+                    if (shouldUpdateUrl)
+                    {
+                        await ErrorLogger.LogInfoToConsole($"Report URL changed from '{currentReportUrl}' to '{response.ReportUrl}'");
+                    }
+                    else
+                    {
+                        await ErrorLogger.LogInfoToConsole($"Report URL is the same as current URL: '{response.ReportUrl}'");
+                    }
+                    
+                    // Always update the current report URL
                     currentReportUrl = response.ReportUrl;
-                    // Force UI update before displaying report
-                    StateHasChanged();
-                    await Task.Delay(100); // Give the DOM time to update
+                    
+                    // If the URL is different, we need to force a UI update first
+                    if (shouldUpdateUrl)
+                    {
+                        // Force UI update before displaying report
+                        StateHasChanged();
+                        await Task.Delay(100); // Give the DOM time to update
+                    }
+                    
+                    // Always display the report
                     await DisplayReport(response.ReportUrl);
                 }
             }
@@ -123,8 +152,18 @@ namespace SSRSCopilot.Web.Components.Pages
             {
                 try
                 {
+                    await ErrorLogger.LogInfoToConsole("Attempting to load reportUtils.js module");
                     await JSRuntime.InvokeVoidAsync("import", "./js/reportUtils.js");
                     _jsModuleLoaded = true;
+                    await ErrorLogger.LogInfoToConsole("reportUtils.js module loaded successfully");
+                    
+                    // Verify that the module is actually loaded
+                    var moduleExists = await JSRuntime.InvokeAsync<bool>("eval", "(typeof window.reportUtils !== 'undefined')");
+                    if (!moduleExists)
+                    {
+                        await ErrorLogger.LogErrorToConsole("WARNING: reportUtils global object not found after loading module");
+                        _jsModuleLoaded = false;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -139,24 +178,37 @@ namespace SSRSCopilot.Web.Components.Pages
         private async Task DisplayReport(string reportUrl)
         {
             try
-            {
-                // Log that we're attempting to display a report
-                await ErrorLogger.LogErrorToConsole($"Attempting to display report: {reportUrl}");
+            {                // Log that we're attempting to display a report
+                await ErrorLogger.LogInfoToConsole($"Attempting to display report: {reportUrl}");
                 
-                // Update UI to show we have a report URL
+                // Make sure JS module is loaded
+                await EnsureJsModuleLoaded();
+                
+                // First clear the container - do this regardless of JS module loading status
+                await JSRuntime.InvokeVoidAsync("eval", "const container = document.getElementById('report-iframe-container'); if(container) { container.innerHTML = ''; }" );
+                
+                // Force a UI update
                 StateHasChanged();
                 
-                await EnsureJsModuleLoaded();
                 if (_jsModuleLoaded)
                 {
+                    // Use the reportUtils.js module
                     await ErrorLogger.TryExecuteJsAsync(
-                        async () => await JSRuntime.InvokeVoidAsync("reportUtils.displayReport", "report-iframe-container", reportUrl),
+                        async () => {
+                            // Log before calling displayReport
+                            await ErrorLogger.LogInfoToConsole($"Calling reportUtils.displayReport with URL: {reportUrl}");
+                            
+                            // Call the displayReport function
+                            await JSRuntime.InvokeVoidAsync("reportUtils.displayReport", "report-iframe-container", reportUrl);
+                            
+                            // Log after calling displayReport
+                            await ErrorLogger.LogInfoToConsole("Called reportUtils.displayReport successfully");
+                        },
                         "Displaying report with reportUtils"
                     );
                 }
                 else
-                {
-                    // Fallback if JS module loading failed - use direct DOM manipulation
+                {                    // Fallback if JS module loading failed - use direct DOM manipulation
                     await ErrorLogger.TryExecuteJsAsync(
                         async () => await JSRuntime.InvokeVoidAsync("eval", $@"
                             const container = document.getElementById('report-iframe-container');
@@ -164,16 +216,12 @@ namespace SSRSCopilot.Web.Components.Pages
                                 // Safely clear the container
                                 container.innerHTML = '';
                                 
-                                // Determine if this is a PDF
-                                const isPdf = '{reportUrl}'.toLowerCase().endsWith('.pdf') || 
-                                            '{reportUrl}'.toLowerCase().includes('format=pdf') ||
-                                            '{reportUrl}'.toLowerCase().includes('/pdf');
+                                // Add a cache-busting parameter to the proxy URL, not the report URL
+                                const timestamp = new Date().getTime();
+                                const proxyUrl = `/api/ReportProxy?url=${{encodeURIComponent('{reportUrl}')}}&_proxyts=${{timestamp}}`;
                                 
-                                let url = '{reportUrl}';
-                                // For PDFs, add parameters to ensure proper scaling
-                                if (isPdf) {{
-                                    url = url + '#view=Fit&zoom=page-fit';
-                                }}
+                                // Add parameters to ensure proper scaling of PDF content
+                                const url = proxyUrl + '#view=Fit&zoom=page-fit';
                                 
                                 const iframe = document.createElement('iframe');
                                 iframe.setAttribute('src', url);
@@ -189,17 +237,26 @@ namespace SSRSCopilot.Web.Components.Pages
                                 iframe.style.left = '0';
                                 iframe.style.right = '0';
                                 iframe.style.bottom = '0';
+                                iframe.style.border = 'none';
                                 
                                 // Add event listener to adjust iframe size when content loads
                                 iframe.onload = function() {{
-                                    console.log('Iframe loaded via fallback');
+                                    console.log('PDF iframe loaded via fallback');
                                     // Force a resize
                                     setTimeout(() => {{
                                         iframe.style.height = '100%';
                                     }}, 100);
                                 }};
                                 
+                                // Log before appending the iframe
+                                console.log('About to append iframe to container');
+                                
                                 container.appendChild(iframe);
+                                
+                                // Log after appending the iframe
+                                console.log('Iframe appended to container');
+                            }} else {{
+                                console.error('Report container not found!');
                             }}
                         "),
                         "Displaying report with fallback"

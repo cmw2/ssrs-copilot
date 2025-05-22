@@ -195,33 +195,36 @@ public class SsrsService : ISsrsService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateReportUrlAsync(SsrsReportModel report, Dictionary<string, string> parameterValues)
+    public async Task<string> GenerateReportUrlAsync(SsrsReportModel report, Dictionary<string, string>? parameterValues = null)
     {
         try
         {
-            _logger.LogInformation("Generating URL for report: {ReportName} with {ParameterCount} parameters", 
+            // Ensure parameterValues is not null
+            parameterValues ??= new Dictionary<string, string>();
+
+            _logger.LogInformation("Generating URL for report: {ReportName} with {ParameterCount} parameters",
                 report.Name, parameterValues.Count);
 
             // Verify that all required parameters are provided
             var parameters = await GetReportParametersAsync(report.Id);
-            
+
             // Create a set of valid parameter names for quick lookup
             var validParameterNames = new HashSet<string>(parameters.Select(p => p.Name));
-            
+
             // Remove rs:Format from the valid parameter list since we'll always add it automatically
             // validParameterNames.Add("rs:Format");
-            
+
             // Check for invalid parameters
             var invalidParameters = parameterValues.Keys
                 .Where(key => !validParameterNames.Contains(key))
                 .ToList();
-                
+
             if (invalidParameters.Any())
             {
                 var invalidNames = string.Join(", ", invalidParameters);
                 throw new ArgumentException($"Invalid parameters provided: {invalidNames}");
             }
-            
+
             var missingParameters = parameters
                 .Where(p => p.IsRequired && (!parameterValues.ContainsKey(p.Name) || string.IsNullOrEmpty(parameterValues[p.Name])))
                 .ToList();
@@ -239,33 +242,33 @@ public class SsrsService : ISsrsService
             {
                 reportPath = $"/{reportPath}";
             }
-            
+
             // Build the parameter query string
             var queryStringBuilder = new StringBuilder();
-            
+
             // Add the required rs:Command=Render parameter first
             queryStringBuilder.Append("&rs:Command=Render");
-            
+
             // Get a dictionary to quickly look up parameter information
             var parameterDict = parameters.ToDictionary(p => p.Name);
-            
+
             // Process all report parameters from the parameter definitions
             foreach (var parameter in parameters)
             {
                 string paramValue = string.Empty;
                 bool useDefaultValue = false;
-                
+
                 // Check if a value was provided for this parameter
                 if (parameterValues.TryGetValue(parameter.Name, out var providedValue))
                 {
                     // Check if the provided value is the same as the default value (if any)
-                    if (!parameter.DefaultValuesIsNull && 
-                        parameter.DefaultValues.Count > 0 && 
+                    if (!parameter.DefaultValuesIsNull &&
+                        parameter.DefaultValues.Count > 0 &&
                         parameter.DefaultValues[0] == providedValue)
                     {
                         // The provided value is the same as the default, no need to include it
                         useDefaultValue = true;
-                        _logger.LogDebug("Parameter {ParameterName} using default value: {DefaultValue}", 
+                        _logger.LogDebug("Parameter {ParameterName} using default value: {DefaultValue}",
                             parameter.Name, providedValue);
                     }
                     else
@@ -278,7 +281,7 @@ public class SsrsService : ISsrsService
                 {
                     // Parameter not provided but has a default value, no need to include it
                     useDefaultValue = true;
-                    _logger.LogDebug("Parameter {ParameterName} using default value: {DefaultValue}", 
+                    _logger.LogDebug("Parameter {ParameterName} using default value: {DefaultValue}",
                         parameter.Name, parameter.DefaultValues[0]);
                 }
                 else
@@ -286,7 +289,7 @@ public class SsrsService : ISsrsService
                     // Parameter not provided and no default value, include as empty
                     paramValue = string.Empty;
                 }
-                
+
                 // Add parameter to URL if it's not using the default value
                 if (!useDefaultValue)
                 {
@@ -295,10 +298,10 @@ public class SsrsService : ISsrsService
                     queryStringBuilder.Append($"{Uri.EscapeDataString(parameter.Name)}={Uri.EscapeDataString(paramValue ?? string.Empty)}");
                 }
             }
-            
+
             // Always add rs:Format=PDF to the URL
             queryStringBuilder.Append("&rs:Format=PDF");
-            
+
             // Construct the final URL using the format: https://[rswebserviceurl]?[pathinfo]&[parameters]
             // Note that the question mark comes before the report path, not after
             var reportUrl = $"{_reportViewerUrl}?{reportPath}{queryStringBuilder}";

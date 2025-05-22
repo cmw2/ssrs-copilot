@@ -29,6 +29,18 @@ public class ErrorLogger
             // Ignore errors in error logging
         }
     }
+    
+    public async Task LogInfoToConsole(string message, string detail = "")
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("console.info", $"Info: {message}", detail);
+        }
+        catch
+        {
+            // Ignore errors in info logging
+        }
+    }
 
     public async Task<bool> TryExecuteJsAsync(Func<Task> action, string context)
     {

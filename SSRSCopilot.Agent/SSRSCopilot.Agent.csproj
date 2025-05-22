@@ -18,9 +18,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.5" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\SSRSCopilot.ServiceDefaults\SSRSCopilot.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Prompts\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
