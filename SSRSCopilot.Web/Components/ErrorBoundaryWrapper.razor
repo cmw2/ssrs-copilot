@@ -1,0 +1,40 @@
+@using Microsoft.AspNetCore.Components.Web
+@using SSRSCopilot.Web.Services
+@inject ErrorLogger ErrorLogger
+
+<ErrorBoundary @ref="errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="exception">        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">An error has occurred</h4>
+            <p>We're sorry, but something went wrong.</p>
+            <hr>
+            <p class="mb-0">
+                <button class="btn btn-sm btn-outline-danger" @onclick="() => errorBoundary?.Recover()">Try Again</button>
+            </p>
+        </div>
+        @{
+            LogError(exception);
+        }
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    private ErrorBoundary? errorBoundary;    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback<Exception> OnError { get; set; }
+    
+    private void LogError(Exception exception)
+    {
+        ErrorLogger?.LogError(exception, "ErrorBoundary");
+        OnError.InvokeAsync(exception);
+    }    protected override void OnInitialized()
+    {
+        // The errorBoundary will be set after the component is rendered
+        // We don't need to check for null here
+        base.OnInitialized();
+    }
+}

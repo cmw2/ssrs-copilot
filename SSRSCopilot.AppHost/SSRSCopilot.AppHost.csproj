@@ -9,9 +9,8 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>0ea20b5f-a037-4287-a8f8-00df0d1dc841</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\SSRSCopilot.ApiService\SSRSCopilot.ApiService.csproj" />
+    <ProjectReference Include="..\SSRSCopilot.Agent\SSRSCopilot.Agent.csproj" />
     <ProjectReference Include="..\SSRSCopilot.Web\SSRSCopilot.Web.csproj" />
   </ItemGroup>
 
