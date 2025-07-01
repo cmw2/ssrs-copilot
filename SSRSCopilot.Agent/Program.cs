@@ -37,7 +37,8 @@ builder.Services.AddAzureOpenAIChatCompletion(
     endpoint: builder.Configuration["AzureOpenAI:Endpoint"] 
         ?? throw new InvalidOperationException("AzureOpenAI:Endpoint configuration is required"),
     apiKey: builder.Configuration["AzureOpenAI:ApiKey"] 
-        ?? throw new InvalidOperationException("AzureOpenAI:ApiKey configuration is required"));
+        ?? throw new InvalidOperationException("AzureOpenAI:ApiKey configuration is required"),
+    apiVersion: builder.Configuration["AzureOpenAI:ApiVersion"]);
 
 // Add Azure OpenAI Embedding service if vector search is enabled
 if (bool.TryParse(builder.Configuration["AzureSearch:VectorSearchEnabled"], out bool vectorSearchEnabled) && vectorSearchEnabled)

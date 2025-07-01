@@ -13,6 +13,7 @@ using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace SSRSCopilot.Agent.Services;
 
@@ -28,6 +29,7 @@ public class AzureSearchService : IAzureSearchService
     private readonly AsyncRetryPolicy _retryPolicy;
     private readonly bool _vectorSearchEnabled;
     private readonly IEmbeddingGenerator<string, Embedding<float>>? _embeddingService;
+    private readonly AzureSearchFieldMapping _fieldMapping;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AzureSearchService"/> class.
@@ -41,6 +43,11 @@ public class AzureSearchService : IAzureSearchService
         IServiceProvider serviceProvider)
     {
         _logger = logger;
+
+        // Load field mapping configuration
+        _fieldMapping = new AzureSearchFieldMapping();
+        configuration.GetSection("AzureSearch:FieldMapping").Bind(_fieldMapping);
+        _fieldMapping.Validate(); // Ensure required fields are configured
 
         var endpoint = configuration["AzureSearch:Endpoint"] 
             ?? throw new InvalidOperationException("AzureSearch:Endpoint configuration is required");
@@ -117,13 +124,20 @@ public class AzureSearchService : IAzureSearchService
                 }
             };
 
-            // Add select fields to include - get all relevant fields
-            searchOptions.Select.Add("id");
-            searchOptions.Select.Add("title"); 
-            searchOptions.Select.Add("content");
-            searchOptions.Select.Add("url");
-            searchOptions.Select.Add("filepath");
-            searchOptions.Select.Add("meta_json_string");
+            // Add select fields to include - use configurable field names
+            searchOptions.Select.Add(_fieldMapping.IdField);
+            searchOptions.Select.Add(_fieldMapping.TitleField);
+            searchOptions.Select.Add(_fieldMapping.ContentField);
+            
+            // Add optional fields if they are configured
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.UrlField))
+                searchOptions.Select.Add(_fieldMapping.UrlField);
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.FilePathField))
+                searchOptions.Select.Add(_fieldMapping.FilePathField);
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.MetadataField))
+                searchOptions.Select.Add(_fieldMapping.MetadataField);
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.ParentIdField))
+                searchOptions.Select.Add(_fieldMapping.ParentIdField);
             
             // Enable vector search if configured
             if (_vectorSearchEnabled && _embeddingService != null)
@@ -138,7 +152,7 @@ public class AzureSearchService : IAzureSearchService
                             Queries = { new VectorizedQuery(embedding.Vector) 
                             { 
                                 KNearestNeighborsCount = 20,
-                                Fields = { "contentVector" } 
+                                Fields = { _fieldMapping.VectorField ?? "contentVector" } 
                             }}
                         };
                         _logger.LogInformation("Vector search enabled with {VectorSize} dimensions", embedding.Vector.Length);
@@ -184,12 +198,18 @@ public class AzureSearchService : IAzureSearchService
                 }
             };
 
-            // Add fields to select
-            searchOptions.Select.Add("content"); // Report documentation is expected to be in the content field
-            searchOptions.Select.Add("url");  // May contain the report name/path
-            searchOptions.Select.Add("filepath"); // May contain the report name/path
-            searchOptions.Select.Add("title"); // May contain report name
-            searchOptions.Select.Add("meta_json_string"); // Additional metadata
+            // Add fields to select using configurable field names
+            searchOptions.Select.Add(_fieldMapping.ContentField); // Report documentation is expected to be in the content field
+            
+            // Add optional fields if they are configured
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.UrlField))
+                searchOptions.Select.Add(_fieldMapping.UrlField);  // May contain the report name/path
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.FilePathField))
+                searchOptions.Select.Add(_fieldMapping.FilePathField); // May contain the report name/path
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.TitleField))
+                searchOptions.Select.Add(_fieldMapping.TitleField); // May contain report name
+            if (!string.IsNullOrWhiteSpace(_fieldMapping.MetadataField))
+                searchOptions.Select.Add(_fieldMapping.MetadataField); // Additional metadata
 
             // Create a simple search text that will match across fields
             string searchText = reportName;
@@ -205,13 +225,13 @@ public class AzureSearchService : IAzureSearchService
                 return "No detailed documentation available for this report.";
             }
 
-            // Combine content from all results
+            // Combine content from all results using configurable field name
             var documentationBuilder = new StringBuilder();
             foreach (var result in searchResult.GetResults())
             {
-                if (result.Document.ContainsKey("content") && result.Document["content"] != null)
+                if (result.Document.ContainsKey(_fieldMapping.ContentField) && result.Document[_fieldMapping.ContentField] != null)
                 {
-                    documentationBuilder.AppendLine(result.Document["content"]?.ToString() ?? "");
+                    documentationBuilder.AppendLine(result.Document[_fieldMapping.ContentField]?.ToString() ?? "");
                     documentationBuilder.AppendLine();
                 }
             }
